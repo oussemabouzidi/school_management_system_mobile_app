@@ -32,6 +32,10 @@ dependencies:
   badges: ^3.1.1
   table_calendar: 3.1.3
   animated_text_kit: ^4.2.2
+  flutter_staggered_animations: ^1.1.1
+  sleek_circular_slider: ^2.0.1
+  circular_gradient_spinner: ^0.0.3
+  image_picker: ^0.8.4+4
   crystal_navigation_bar:
   flutter:
     sdk: flutter
@@ -42,6 +46,11 @@ dependencies:
   iconly: ^1.0.1
   easy_date_timeline: ^2.0.9
   slide_switcher: ^1.1.2
+  http: ^1.3.0
+  enhanced_url_launcher: ^6.1.12
+  internet_connection_checker_plus: ^2.7.1
+  get: ^4.7.2
+  file_picker: ^10.1.2
 
 dev_dependencies:
   flutter_test:
@@ -137,6 +146,15 @@ flutter:
     - images/payment/excursion.png
     - images/payment/football.png
     - images/payment/music.png
+    - images/actualites/theatre.png
+    - images/actualites/music.png
+    - images/actualites/robot.png
+    - images/actualites/math.png
+    - images/actualites/france.png
+    - images/actualites/england.png
+    - images/actualites/concour.png
+    - images/actualites/crossword.png
+    - images/actualites/event.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
