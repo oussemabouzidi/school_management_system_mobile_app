@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:my_app3/controller/wrappercontroller.dart';
+import 'package:my_app3/services/Services.dart';
 import 'package:my_app3/widgets/notification_button.dart';
 import 'package:my_app3/widgets/student_card.dart';
 
@@ -59,7 +60,9 @@ class _SettingsState extends State<Settings> {
               ),
 
               // Notification button with badge
-              NotificationButton()
+              NotificationButton(
+                notificationService: Service(),
+              )
             ],
           ),
         ),

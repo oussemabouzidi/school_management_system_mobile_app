@@ -36,6 +36,7 @@ dependencies:
   sleek_circular_slider: ^2.0.1
   circular_gradient_spinner: ^0.0.3
   image_picker: ^0.8.4+4
+  intl: 0.19.0
   crystal_navigation_bar:
   flutter:
     sdk: flutter
@@ -51,6 +52,9 @@ dependencies:
   internet_connection_checker_plus: ^2.7.1
   get: ^4.7.2
   file_picker: ^10.1.2
+  shared_preferences: ^2.5.3
+  geolocator: ^10.1.0
+  permission_handler: ^12.0.0+1
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +82,7 @@ flutter:
     - images/young_happy_man.png
     - images/logo_home_page.png
     - images/presence.png
+    - images/undone.png
     - images/chatbot_icon_screen.png
     - images/menu/actualite.png
     - images/menu/cantine.png
@@ -155,6 +160,21 @@ flutter:
     - images/actualites/concour.png
     - images/actualites/crossword.png
     - images/actualites/event.png
+    - images/absence.png
+    - images/warnning.png
+    - images/positive.png
+    - images/negative.png
+    - images/eleve.png
+    - images/parent.png
+    - images/livres/cahier_bilingues.jpg
+    - images/livres/cahiers_vacances.jpg
+    - images/livres/cartes_educatives.jpg
+    - images/livres/exercies_en_arabic_and_math.png
+    - images/livres/je_comprends_tout.jpg
+    - images/livres/read_and_learn.jpg
+    - images/livres/sami_et_julie.jpg
+    - images/livres/tout_programme.jpg
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

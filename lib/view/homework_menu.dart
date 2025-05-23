@@ -1,8 +1,13 @@
+import 'package:circular_gradient_spinner/circular_gradient_spinner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:my_app3/controller/matiere_controller.dart';
+import 'package:my_app3/models/Matiere.dart';
 import 'package:my_app3/widgets/language_button.dart';
 
 class HomeworkMenu extends StatelessWidget {
+  final MatiereController _matiereController = Get.put(MatiereController());
+
   @override
   Widget build(BuildContext context) {
     return ListView(children: [
@@ -66,141 +71,99 @@ class HomeworkMenu extends StatelessWidget {
           ),
           SizedBox(height: 40),
 
+          // Matiere Cards
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-// Explanation card
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    surfaceTintColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
+            child: Obx(() {
+              if (_matiereController.isLoading.value) {
+                return Center(
+                    child: CircularGradientSpinner(
+                  color: Colors.blue,
+                  size: 50,
+                  strokeWidth: 20,
+                ));
+              } else if (_matiereController.hasError.value) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          'Error loading subjects: ${_matiereController.errorMessage.value}'),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => _matiereController.fetchMatieres(),
+                        child: Text('Retry'),
+                      ),
+                    ],
                   ),
-                  onPressed: () {
-                    Get.toNamed('/menu/homework/details', id: 1);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Explication des mots',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                );
+              } else if (_matiereController.matieres.isEmpty) {
+                return Center(child: Text('No subjects available'));
+              } else {
+                return Column(
+                  children: [
+                    // Dynamic matiere cards
+                    ..._matiereController.matieres
+                        .map(
+                          (matiere) => Column(
+                            children: [
+                              buildMatiereCard(matiere),
+                              SizedBox(height: 16),
+                            ],
                           ),
-                        ),
-                        Image.asset(
-                          "images/homework/book.png",
-                          width: 80,
-                          height: 80,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                // Explanation card
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Informatique',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Image.asset(
-                        "images/homework/informatique.png",
-                        width: 80,
-                        height: 80,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                // Explanation card
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Mathematique',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Image.asset(
-                        "images/homework/math.png",
-                        width: 80,
-                        height: 80,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                // Explanation card
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Francais',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Image.asset(
-                        "images/homework/francais.png",
-                        width: 80,
-                        height: 80,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16),
-              ],
-            ),
+                        )
+                        .toList(),
+                  ],
+                );
+              }
+            }),
           )
         ],
       ),
     ]);
+  }
+
+  Widget buildMatiereCard(Matiere matiere) {
+    return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          padding: EdgeInsets.zero,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+        ),
+        onPressed: () {
+          print(matiere.id);
+          Get.toNamed('/menu/homework_details',
+              id: 1, arguments: {'id': matiere.id.toString()});
+        },
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                matiere.nomMatiereFr,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Image.asset(
+                matiere.imageAsset,
+                width: 80,
+                height: 80,
+              ),
+            ],
+          ),
+        ));
   }
 }

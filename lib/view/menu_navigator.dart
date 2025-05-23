@@ -3,13 +3,18 @@ import 'package:get/get.dart';
 import 'package:my_app3/view/activite.dart';
 import 'package:my_app3/view/behavior.dart';
 import 'package:my_app3/view/cantine.dart';
+import 'package:my_app3/view/course.dart';
 import 'package:my_app3/view/despline_2.dart';
 import 'package:my_app3/view/homework.dart';
 import 'package:my_app3/view/homework_menu.dart';
+import 'package:my_app3/view/livres.dart';
+import 'package:my_app3/view/matiere_course.dart';
 import 'package:my_app3/view/menu_2.dart';
 import 'package:my_app3/view/despline.dart';
 import 'package:my_app3/view/notes.dart';
 import 'package:my_app3/view/payement.dart';
+import 'package:my_app3/view/reunion.dart';
+import 'package:my_app3/view/savoir_plus.dart';
 import 'package:my_app3/view/schedule.dart';
 // Add other subpages you want to navigate to from Menu
 
@@ -24,29 +29,44 @@ class MenuNavigator extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/menu/main':
-            return MaterialPageRoute(builder: (_) => Menu2());
+            return GetPageRoute(page: () => Menu2());
           case '/menu/despline':
-            return MaterialPageRoute(builder: (_) => Despline());
+            return GetPageRoute(page: () => Despline());
           case '/menu/despline_mounth':
-            return MaterialPageRoute(builder: (_) => Despline2());
+            return GetPageRoute(page: () => Despline2());
           case '/menu/notes':
-            return MaterialPageRoute(builder: (_) => Notes());
+            return GetPageRoute(page: () => Notes());
           case '/menu/homework':
-            return MaterialPageRoute(builder: (_) => HomeworkMenu());
-          case '/menu/homework/details':
-            return MaterialPageRoute(builder: (_) => Homework());
+            return GetPageRoute(page: () => HomeworkMenu());
+          case '/menu/homework_details':
+            final args = settings.arguments
+                as Map<String, dynamic>?; // 👈 grab arguments manually
+            return GetPageRoute(
+              page: () => Homework(arguments: args),
+            );
           case '/menu/schedule':
-            return MaterialPageRoute(builder: (_) => Schedule());
+            return GetPageRoute(page: () => Schedule());
           case '/menu/paiement':
-            return MaterialPageRoute(builder: (_) => Payement());
+            return GetPageRoute(page: () => Payement());
           case '/menu/cantine':
-            return MaterialPageRoute(builder: (_) => Cantine());
+            return GetPageRoute(page: () => Cantine());
           case '/menu/behavior':
-            return MaterialPageRoute(builder: (_) => Behavior());
+            return GetPageRoute(page: () => Behavior());
           case '/menu/actualite':
-            return MaterialPageRoute(builder: (_) => Activite());
+            return GetPageRoute(page: () => Activite());
+          case '/menu/savoir_plus':
+            return GetPageRoute(page: () => SavoirPlus());
+          case '/menu/livres':
+            return GetPageRoute(page: () => Livres());
+          case '/menu/reunion':
+            return GetPageRoute(page: () => ReunionScreen());
+          case '/menu/course_matieres':
+            return GetPageRoute(page: () => MatiereCourse());
+          case '/menu/course_details':
+            final args = settings.arguments as Map<String, dynamic>?;
+            return GetPageRoute(page: () => CourseScreen(arguments: args));
           default:
-            return MaterialPageRoute(builder: (_) => Menu2());
+            return GetPageRoute(page: () => Menu2());
         }
       },
     );

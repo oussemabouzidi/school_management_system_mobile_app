@@ -116,7 +116,7 @@ class Menu2 extends StatelessWidget {
                 DashboardItem(
                   image: "images/dashboard/courses.png",
                   label: 'Courses',
-                  route: '',
+                  route: '/menu/course_matieres',
                 ),
                 DashboardItem(
                   image: "images/dashboard/assignment.png",
@@ -126,12 +126,12 @@ class Menu2 extends StatelessWidget {
                 DashboardItem(
                   image: "images/dashboard/books.png",
                   label: 'Mes livres',
-                  route: '',
+                  route: '/menu/livres',
                 ),
                 DashboardItem(
                   image: "images/dashboard/Meeting.png",
                   label: 'Réunions',
-                  route: '',
+                  route: '/menu/reunion',
                 ),
                 DashboardItem(
                   image: "images/dashboard/Schedule.png",
@@ -162,7 +162,7 @@ temps""",
                 DashboardItem(
                   image: "images/dashboard/Information.png",
                   label: 'Savoir plus',
-                  route: '',
+                  route: '/menu/savoir_plus',
                 ),
                 DashboardItem(
                   image: "images/dashboard/Rapport.png",

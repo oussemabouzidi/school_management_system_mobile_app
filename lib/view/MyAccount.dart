@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:my_app3/controller/myaccount_controller.dart';
+import 'package:my_app3/services/Services.dart';
 import 'package:my_app3/widgets/language_button.dart';
 import 'package:my_app3/widgets/logout_button.dart';
 import 'package:my_app3/widgets/notification_button.dart';
@@ -10,25 +12,9 @@ class Myaccount extends StatefulWidget {
 }
 
 class _MyaccountState extends State<Myaccount> {
+  final MyaccountController controller = Get.put(MyaccountController());
   // Mock data for children profiles
-  final List<Map<String, dynamic>> childrenProfiles = [
-    {
-      'name': 'Ahmed Snoussi',
-      'id': '11023',
-      'grade': 'Deuxième année',
-      'image': 'images/student.png',
-      'birthDate': '15 Oct 2013',
-      'phone': '+216 54 784 621',
-    },
-    {
-      'name': 'Sara Snoussi',
-      'id': '11024',
-      'grade': 'Quatrième année',
-      'image': 'images/student_female.png',
-      'birthDate': '23 Apr 2011',
-      'phone': '+216 54 784 621',
-    },
-  ];
+  //final List<Map<String, dynamic>> childrenProfiles ;
 
   int selectedChildIndex = 0;
 
@@ -48,9 +34,9 @@ class _MyaccountState extends State<Myaccount> {
             width: double.maxFinite,
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: childrenProfiles.length,
+              itemCount: controller.eleveProfile.length,
               itemBuilder: (context, index) {
-                final child = childrenProfiles[index];
+                final child = controller.eleveProfile[index];
                 return Container(
                   margin: EdgeInsets.only(bottom: 10),
                   decoration: BoxDecoration(
@@ -61,13 +47,18 @@ class _MyaccountState extends State<Myaccount> {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: AssetImage(child['image']),
+                      backgroundImage: AssetImage(
+                        (child['image'] != null &&
+                                child['image'].toString().isNotEmpty)
+                            ? child['image']
+                            : 'images/student.png', // your default image path
+                      ),
                     ),
                     title: Text(
-                      child['name'],
+                      child['nom'],
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(child['grade']),
+                    subtitle: Text(child['classe']),
                     selected: selectedChildIndex == index,
                     onTap: () {
                       setState(() {
@@ -95,286 +86,325 @@ class _MyaccountState extends State<Myaccount> {
 
   @override
   Widget build(BuildContext context) {
-    final currentChild = childrenProfiles[selectedChildIndex];
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return Center(child: CircularProgressIndicator());
+      }
 
-    return ListView(
-      children: [
-        // Top navigation bar (similar to EducationalDashboard)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      if (controller.hasError.value) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Language button
-              LanguageButton(),
-              // Notifications
-              NotificationButton(),
-              // Logout
-              LogoutButton()
-            ],
-          ),
-        ),
-
-        // User profile card (updated to show current child and switch profile button)
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                spreadRadius: 0,
-                offset: const Offset(0, 2),
+              Icon(Icons.error_outline, size: 48, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                controller.errorMessage.value,
+                style: TextStyle(color: Colors.red, fontSize: 16),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: controller.fetchData,
+                icon: Icon(Icons.refresh),
+                label: Text('Réessayer'),
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Column(
+        );
+      }
+
+      if (controller.eleveProfile.isEmpty) {
+        return Center(child: Text('Aucun profil trouvé.'));
+      }
+
+      final currentChild = controller.eleveProfile[selectedChildIndex];
+
+      return ListView(
+        children: [
+          // Top navigation bar (similar to EducationalDashboard)
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
+                // Language button
+                LanguageButton(),
+                // Notifications
+                NotificationButton(
+                  notificationService: Service(),
+                ),
+                // Logout
+                LogoutButton()
+              ],
+            ),
+          ),
+
+          // User profile card (updated to show current child and switch profile button)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentChild['nom'],
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D3142),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            currentChild['classe'],
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Color(0xFF2D3142),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey.shade200,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.asset(
+                          currentChild['image'] != null &&
+                                  currentChild['image'].toString().isNotEmpty
+                              ? currentChild['image']
+                              : 'images/student.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Switch profile button
+                  SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _showChildrenSelectionDialog,
+                      icon: Icon(Icons.swap_horiz, color: Colors.white),
+                      label: Text(
+                        "Changer d'enfant",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF4E7DFF),
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Personal info card with modern design
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF6F6F6),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            'Informations Personnelles',
+                            style: TextStyle(
+                              color: Color(0xFF2D3142),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Info rows - updated to use the selected child's data
+                  _buildInfoRow(
+                    iconData: Icons.badge,
+                    leftText: 'Nom et Identifiant',
+                    rightWidget: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          currentChild['name'],
+                          currentChild['nom'],
                           style: TextStyle(
-                            fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
                             color: Color(0xFF2D3142),
                           ),
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: 4),
                         Text(
-                          currentChild['grade'],
+                          "${currentChild['eleve_id']}",
                           style: TextStyle(
-                            fontSize: 18,
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildInfoRow(
+                    iconData: Icons.calendar_today,
+                    leftText: 'Date de naissance',
+                    rightWidget: Text(
+                      currentChild['date_naissance'],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                  ),
+                  _buildInfoRow(
+                    iconData: Icons.phone,
+                    leftText: 'Contact téléphonique',
+                    rightWidget: Text(
+                      currentChild['telephone'],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                  ),
+                  _buildInfoRow(
+                    iconData: Icons.people,
+                    leftText: 'Nom et prenom de parent',
+                    rightWidget: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Mohamed Snoussi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color(0xFF2D3142),
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Mouna Snoussi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                             color: Color(0xFF2D3142),
                           ),
                         ),
                       ],
                     ),
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey.shade200,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.asset(
-                        currentChild['image'],
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Switch profile button
-                SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _showChildrenSelectionDialog,
-                    icon: Icon(Icons.swap_horiz, color: Colors.white),
-                    label: Text(
-                      "Changer d'enfant",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF4E7DFF),
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    isLastRow: true,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
 
-        // Personal info card with modern design
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF6F6F6),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
+          // Additional actions section
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'Informations Personnelles',
-                          style: TextStyle(
-                            color: Color(0xFF2D3142),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildActionButton(
+                    icon: Icons.edit,
+                    text: "Modifier le profil",
+                    color: Colors.blue,
                   ),
-                ),
-
-                // Info rows - updated to use the selected child's data
-                _buildInfoRow(
-                  iconData: Icons.badge,
-                  leftText: 'Nom et Identifiant',
-                  rightWidget: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        currentChild['name'],
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(0xFF2D3142),
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        currentChild['id'],
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+                  Divider(height: 1),
+                  _buildActionButton(
+                    icon: Icons.password,
+                    text: "Changer le mot de passe",
+                    color: Colors.green,
                   ),
-                ),
-                _buildInfoRow(
-                  iconData: Icons.calendar_today,
-                  leftText: 'Date de naissance',
-                  rightWidget: Text(
-                    currentChild['birthDate'],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF2D3142),
-                    ),
+                  Divider(height: 1),
+                  _buildActionButton(
+                    icon: Icons.help_outline,
+                    text: "Aide et support",
+                    color: Colors.purple,
+                    isLastItem: true,
                   ),
-                ),
-                _buildInfoRow(
-                  iconData: Icons.phone,
-                  leftText: 'Contact téléphonique',
-                  rightWidget: Text(
-                    currentChild['phone'],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF2D3142),
-                    ),
-                  ),
-                ),
-                _buildInfoRow(
-                  iconData: Icons.people,
-                  leftText: 'Nom et prenom de parent',
-                  rightWidget: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Mohamed Snoussi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(0xFF2D3142),
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Mouna Snoussi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(0xFF2D3142),
-                        ),
-                      ),
-                    ],
-                  ),
-                  isLastRow: true,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-
-        // Additional actions section
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                _buildActionButton(
-                  icon: Icons.edit,
-                  text: "Modifier le profil",
-                  color: Colors.blue,
-                ),
-                Divider(height: 1),
-                _buildActionButton(
-                  icon: Icons.password,
-                  text: "Changer le mot de passe",
-                  color: Colors.green,
-                ),
-                Divider(height: 1),
-                _buildActionButton(
-                  icon: Icons.help_outline,
-                  text: "Aide et support",
-                  color: Colors.purple,
-                  isLastItem: true,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _buildInfoRow({
@@ -439,6 +469,7 @@ class _MyaccountState extends State<Myaccount> {
     );
   }
 
+// In your Myaccount class, update the _buildActionButton method like this:
   Widget _buildActionButton({
     required IconData icon,
     required String text,
@@ -477,9 +508,19 @@ class _MyaccountState extends State<Myaccount> {
         ),
         onTap: () {
           if (text == "Changer le mot de passe") {
-            Get.toNamed('/myaccount/change_password', id: 3);
+            Get.toNamed(
+              '/myaccount/change_password',
+              id: 3,
+            );
           } else if (text == "Modifier le profil") {
-            Get.toNamed('/myaccount/update_profile', id: 3);
+            // Pass the correct student ID to ModifierProfil
+            final studentId =
+                controller.eleveProfile[selectedChildIndex]['eleve_id'];
+            Get.toNamed(
+              '/myaccount/update_profile',
+              id: 3,
+              arguments: studentId,
+            );
           }
         },
       ),

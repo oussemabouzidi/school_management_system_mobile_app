@@ -1,42 +1,234 @@
+import 'package:circular_gradient_spinner/circular_gradient_spinner.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:intl/intl.dart';
+import 'package:my_app3/services/Services.dart';
 import 'package:my_app3/widgets/notification_button.dart';
 import 'package:my_app3/widgets/student_card.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class Despline2 extends StatefulWidget {
+  final String? month;
+  final int? year;
+
+  const Despline2({
+    Key? key,
+    this.month,
+    this.year,
+  }) : super(key: key);
+
   @override
   _Despline2State createState() => _Despline2State();
 }
 
 class _Despline2State extends State<Despline2> {
-  // Sample attendance data - Map of dates to attendance status
-  final Map<DateTime, String> _attendanceData = {
-    DateTime.utc(2025, 1, 5): 'Present',
-    DateTime.utc(2025, 1, 7): 'Present',
-    DateTime.utc(2025, 1, 10): 'Present',
-    DateTime.utc(2025, 1, 12): 'Present',
-    DateTime.utc(2025, 1, 15): 'Present',
-    DateTime.utc(2025, 1, 17): 'Present',
-    DateTime.utc(2025, 1, 19): 'Present',
-    DateTime.utc(2025, 1, 22): 'Present',
-    DateTime.utc(2025, 1, 24): 'Present',
-    DateTime.utc(2025, 1, 3): 'Absent',
-    DateTime.utc(2025, 1, 14): 'Absent',
-    DateTime.utc(2025, 1, 28): 'Absent',
-    DateTime.utc(2025, 1, 8): 'Retard',
-    DateTime.utc(2025, 1, 21): 'Retard',
+  Map<DateTime, String> _attendanceData = {};
+  List<AttendanceRecord> _recentAttendance = [];
+
+  bool isLoading = true;
+  int presentCount = 0;
+  int absentCount = 0;
+  int retardCount = 0;
+
+  // Month and year state management
+  late DateTime _focusedDay;
+  DateTime? _selectedDay;
+  String selectedMonth = "January"; // Default value
+  String selectedYear = "2025"; // Default value
+
+  final Map<String, int> monthToNum = {
+    "January": 1,
+    "February": 2,
+    "March": 3,
+    "April": 4,
+    "May": 5,
+    "June": 6,
+    "July": 7,
+    "August": 8,
+    "September": 9,
+    "October": 10,
+    "November": 11,
+    "December": 12
   };
 
-  DateTime _focusedDay = DateTime.utc(
-    2025,
-    1,
-  );
-  DateTime? _selectedDay;
+  final List<String> monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize month/year based on parameters if provided
+    if (widget.month != null) {
+      // Convert month abbreviation to full name
+      final Map<String, String> monthAbbrevToFull = {
+        'Jan': 'January',
+        'Feb': 'February',
+        'Mar': 'March',
+        'Apr': 'April',
+        'May': 'May',
+        'Jun': 'June',
+        'Jul': 'July',
+        'Aug': 'August',
+        'Sep': 'September',
+        'Oct': 'October',
+        'Nov': 'November',
+        'Dec': 'December'
+      };
+
+      selectedMonth = monthAbbrevToFull[widget.month] ?? 'January';
+    }
+
+    if (widget.year != null) {
+      selectedYear = widget.year.toString();
+    }
+
+    // Set the focused day based on selected month and year
+    final monthNum = monthToNum[selectedMonth] ?? 1;
+    final yearNum = int.tryParse(selectedYear) ?? 2025;
+
+    _focusedDay = DateTime.utc(yearNum, monthNum, 1);
     _selectedDay = _focusedDay;
+
+    fetchAttendanceData();
+  }
+
+  // Fetch attendance data from API
+  Future<void> fetchAttendanceData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Get month calendar data (this would ideally come from an API endpoint per month)
+      await fetchMonthAttendance();
+
+      // Get recent attendance records
+      await fetchRecentAttendance();
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching attendance data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // Fetch month calendar data (in a real app, this would come from a dedicated API)
+  Future<void> fetchMonthAttendance() async {
+    // In a real app, you'd have an API endpoint to get all attendance for a specific month
+    // For now, we'll simulate this with random data for the month
+
+    final monthNum = monthToNum[selectedMonth] ?? 1;
+    final yearNum = int.tryParse(selectedYear) ?? 2025;
+
+    // Clear previous data
+    _attendanceData = {};
+    presentCount = 0;
+    absentCount = 0;
+    retardCount = 0;
+
+    // For demo, let's create some attendance data for the current month
+    // In a real app, replace this with API call data
+    final daysInMonth = DateTime(yearNum, monthNum + 1, 0).day;
+    //final random = DateTime.now().millisecondsSinceEpoch % 3;
+
+    // Create a set of weekdays (1-5, Monday to Friday) in the month
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime.utc(yearNum, monthNum, day);
+
+      // Skip weekends
+      if (date.weekday > 5) continue;
+
+      // Assign status (this would come from API in real app)
+      // For demo purposes, we'll create a pattern
+      String status;
+      if (day % 10 == 3 || day % 10 == 6) {
+        status = 'Absent';
+        absentCount++;
+      } else if (day % 7 == 2 || day % 7 == 5) {
+        status = 'Retard';
+        retardCount++;
+      } else {
+        status = 'Present';
+        presentCount++;
+      }
+
+      _attendanceData[date] = status;
+    }
+  }
+
+  // Fetch recent attendance records
+  Future<void> fetchRecentAttendance() async {
+    try {
+      final int inscriptionId =
+          1; // This would typically come from state management
+      final response = await http.get(
+        Uri.parse("${Service().baseUrl}/api/attendance/lasts/$inscriptionId"),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+
+        setState(() {
+          _recentAttendance = jsonData.map((record) {
+            // Parse the date
+            final date = DateTime.parse(record['date_session']);
+            final formattedDate = DateFormat('MMMM d, yyyy').format(date);
+
+            // Map the status and set appropriate colors
+            String status = 'Unknown';
+            Color statusColor = Colors.grey;
+            Color bgColor = Colors.grey.withOpacity(0.3);
+
+            switch (record['etat'].toString().toLowerCase()) {
+              case 'present':
+                status = 'Present';
+                statusColor = Color(0xFF008000);
+                bgColor = Color(0xFFAAF0C8).withOpacity(0.3);
+                break;
+              case 'absent':
+                status = 'Absent';
+                statusColor = Color(0xFFFF6B6B);
+                bgColor = Color(0xFFFFDADA).withOpacity(0.3);
+                break;
+              case 'retard':
+                status = 'Retard';
+                statusColor = Color(0xFF4A86E8);
+                bgColor = Color(0xFFCCE6FF).withOpacity(0.3);
+                break;
+            }
+
+            return AttendanceRecord(
+              date: formattedDate,
+              status: status,
+              statusColor: statusColor,
+              bgColor: bgColor,
+            );
+          }).toList();
+        });
+      } else {
+        print('Failed to load recent attendance: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching recent attendance: $e');
+    }
   }
 
   // Get event list for a day
@@ -44,6 +236,28 @@ class _Despline2State extends State<Despline2> {
     final normalizedDay = DateTime.utc(day.year, day.month, day.day);
     final status = _attendanceData[normalizedDay];
     return status != null ? [status] : [];
+  }
+
+  // Update month and refetch data
+  void _updateMonth(String month) {
+    setState(() {
+      selectedMonth = month;
+      final monthNum = monthToNum[month] ?? 1;
+      final yearNum = int.tryParse(selectedYear) ?? 2025;
+      _focusedDay = DateTime.utc(yearNum, monthNum, 1);
+    });
+    fetchAttendanceData();
+  }
+
+  // Update year and refetch data
+  void _updateYear(String year) {
+    setState(() {
+      selectedYear = year;
+      final monthNum = monthToNum[selectedMonth] ?? 1;
+      final yearNum = int.tryParse(year) ?? 2025;
+      _focusedDay = DateTime.utc(yearNum, monthNum, 1);
+    });
+    fetchAttendanceData();
   }
 
   @override
@@ -102,24 +316,20 @@ class _Despline2State extends State<Despline2> {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: DropdownButton<String>(
-                  value: "January",
+                  value: selectedMonth,
                   underline: Container(),
                   icon: const Icon(Icons.arrow_drop_down),
-                  items: const [
-                    DropdownMenuItem(
-                      value: "January",
-                      child: Text("January"),
-                    ),
-                    DropdownMenuItem(
-                      value: "February",
-                      child: Text("February"),
-                    ),
-                    DropdownMenuItem(
-                      value: "March",
-                      child: Text("March"),
-                    ),
-                  ],
-                  onChanged: (value) {},
+                  items: monthNames.map((String month) {
+                    return DropdownMenuItem<String>(
+                      value: month,
+                      child: Text(month),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      _updateMonth(value);
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -132,147 +342,162 @@ class _Despline2State extends State<Despline2> {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: DropdownButton<String>(
-                  value: "2025",
+                  value: selectedYear,
                   underline: Container(),
                   icon: const Icon(Icons.arrow_drop_down),
-                  items: const [
-                    DropdownMenuItem(
-                      value: "2025",
-                      child: Text("2025"),
-                    ),
-                    DropdownMenuItem(
-                      value: "2024",
-                      child: Text("2024"),
-                    ),
+                  items: [
+                    DropdownMenuItem(value: "2025", child: Text("2025")),
+                    DropdownMenuItem(value: "2024", child: Text("2024")),
+                    DropdownMenuItem(value: "2023", child: Text("2023")),
                   ],
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    if (value != null) {
+                      _updateYear(value);
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 8),
 
               // Notifications
-              NotificationButton()
+              NotificationButton(
+                notificationService: Service(),
+              )
             ],
           ),
         ),
 
         // Student profile card
         StudentCard(),
+
         // Calendar with attendance markers
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                spreadRadius: 0,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TableCalendar(
-                  firstDay: DateTime.utc(2025, 1, 1),
-                  lastDay: DateTime.utc(2025, 12, 31),
-                  focusedDay: _focusedDay,
-                  selectedDayPredicate: (day) {
-                    return isSameDay(_selectedDay, day);
-                  },
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  },
-                  onPageChanged: (focusedDay) {
-                    _focusedDay = focusedDay;
-                  },
-                  eventLoader: _getEventsForDay,
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: Color(0xFF4A86E8).withOpacity(0.7),
-                      shape: BoxShape.circle,
-                    ),
-                    selectedDecoration: BoxDecoration(
-                      color: Color(0xFF4A86E8),
-                      shape: BoxShape.circle,
-                    ),
-                    markersMaxCount: 1,
-                    markerDecoration: BoxDecoration(
-                      color: Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                    markerSize: 8,
-                    markerMargin: const EdgeInsets.symmetric(horizontal: 0.5),
-                  ),
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                  ),
-                  calendarBuilders: CalendarBuilders(
-                    markerBuilder: (context, date, events) {
-                      if (events.isEmpty) return null;
-
-                      final status = events.first as String;
-                      Color markerColor;
-
-                      switch (status) {
-                        case 'Present':
-                          markerColor = Color(0xFF008000);
-                          break;
-                        case 'Absent':
-                          markerColor = Color(0xFFFF6B6B);
-                          break;
-                        case 'Retard':
-                          markerColor = Color(0xFF4A86E8);
-                          break;
-                        default:
-                          markerColor = Colors.grey;
-                      }
-
-                      return Positioned(
-                        bottom: 1,
-                        child: Container(
-                          width: 35,
-                          height: 35,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: markerColor.withOpacity(0.3),
-                            border: Border.all(
-                              color: markerColor,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // Calendar legend
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildLegendItem('Present', Color(0xFF008000)),
-                      SizedBox(width: 16),
-                      _buildLegendItem('Absent', Color(0xFFFF6B6B)),
-                      SizedBox(width: 16),
-                      _buildLegendItem('Retard', Color(0xFF4A86E8)),
-                    ],
-                  ),
+        if (isLoading)
+          CircularGradientSpinner(
+            color: Colors.blue,
+            size: 50,
+            strokeWidth: 20,
+          )
+        else
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TableCalendar(
+                    firstDay: DateTime.utc(int.parse(selectedYear) - 1, 1, 1),
+                    lastDay: DateTime.utc(int.parse(selectedYear) + 1, 12, 31),
+                    focusedDay: _focusedDay,
+                    selectedDayPredicate: (day) {
+                      return isSameDay(_selectedDay, day);
+                    },
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                    },
+                    onPageChanged: (focusedDay) {
+                      // Update month/year dropdowns when calendar page changes
+                      setState(() {
+                        _focusedDay = focusedDay;
+                        selectedMonth = monthNames[focusedDay.month - 1];
+                        selectedYear = focusedDay.year.toString();
+                      });
+                      fetchAttendanceData();
+                    },
+                    eventLoader: _getEventsForDay,
+                    calendarStyle: CalendarStyle(
+                      todayDecoration: BoxDecoration(
+                        color: Color(0xFF4A86E8).withOpacity(0.7),
+                        shape: BoxShape.circle,
+                      ),
+                      selectedDecoration: BoxDecoration(
+                        color: Color(0xFF4A86E8),
+                        shape: BoxShape.circle,
+                      ),
+                      markersMaxCount: 1,
+                      markerDecoration: BoxDecoration(
+                        color: Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                      markerSize: 8,
+                      markerMargin: const EdgeInsets.symmetric(horizontal: 0.5),
+                    ),
+                    headerStyle: HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                    ),
+                    calendarBuilders: CalendarBuilders(
+                      markerBuilder: (context, date, events) {
+                        if (events.isEmpty) return null;
+
+                        final status = events.first as String;
+                        Color markerColor;
+
+                        switch (status) {
+                          case 'Present':
+                            markerColor = Color(0xFF008000);
+                            break;
+                          case 'Absent':
+                            markerColor = Color(0xFFFF6B6B);
+                            break;
+                          case 'Retard':
+                            markerColor = Color(0xFF4A86E8);
+                            break;
+                          default:
+                            markerColor = Colors.grey;
+                        }
+
+                        return Positioned(
+                          bottom: 1,
+                          child: Container(
+                            width: 35,
+                            height: 35,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: markerColor.withOpacity(0.3),
+                              border: Border.all(
+                                color: markerColor,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  // Calendar legend
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildLegendItem('Present', Color(0xFF008000)),
+                        SizedBox(width: 16),
+                        _buildLegendItem('Absent', Color(0xFFFF6B6B)),
+                        SizedBox(width: 16),
+                        _buildLegendItem('Retard', Color(0xFF4A86E8)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
 
         // Statistics Section
         Padding(
@@ -291,8 +516,8 @@ class _Despline2State extends State<Despline2> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        '23',
+                      Text(
+                        presentCount.toString(),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
@@ -329,8 +554,8 @@ class _Despline2State extends State<Despline2> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        '3',
+                      Text(
+                        absentCount.toString(),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
@@ -356,7 +581,7 @@ class _Despline2State extends State<Despline2> {
               ),
               const SizedBox(width: 12),
 
-              // Excused count
+              // Retard count
               Expanded(
                 child: Container(
                   height: 100,
@@ -367,8 +592,8 @@ class _Despline2State extends State<Despline2> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        '2',
+                      Text(
+                        retardCount.toString(),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
@@ -426,33 +651,34 @@ class _Despline2State extends State<Despline2> {
               SizedBox(height: 12),
 
               // Attendance records list
-              AttendanceRecord(
-                date: "April 10, 2025",
-                status: "Present",
-                statusColor: Color(0xFF008000),
-                bgColor: Color(0xFFAAF0C8).withOpacity(0.3),
-              ),
-              SizedBox(height: 8),
-              AttendanceRecord(
-                date: "April 9, 2025",
-                status: "Present",
-                statusColor: Color(0xFF008000),
-                bgColor: Color(0xFFAAF0C8).withOpacity(0.3),
-              ),
-              SizedBox(height: 8),
-              AttendanceRecord(
-                date: "April 8, 2025",
-                status: "Absent",
-                statusColor: Color(0xFFFF6B6B),
-                bgColor: Color(0xFFFFDADA).withOpacity(0.3),
-              ),
-              SizedBox(height: 8),
-              AttendanceRecord(
-                date: "April 7, 2025",
-                status: "Retard",
-                statusColor: Color(0xFF4A86E8),
-                bgColor: Color(0xFFCCE6FF).withOpacity(0.3),
-              ),
+              if (isLoading)
+                CircularGradientSpinner(
+                  color: Colors.blue,
+                  size: 50,
+                  strokeWidth: 20,
+                )
+              else if (_recentAttendance.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      "Aucun enregistrement trouvé",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: _recentAttendance.map((record) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: record,
+                    );
+                  }).toList(),
+                ),
             ],
           ),
         ),

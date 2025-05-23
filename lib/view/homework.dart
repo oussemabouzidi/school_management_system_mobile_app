@@ -1,114 +1,166 @@
+import 'package:circular_gradient_spinner/circular_gradient_spinner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:my_app3/controller/homework_controller.dart';
 import 'package:my_app3/widgets/language_button.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
 
 class Homework extends StatefulWidget {
   @override
   _HomeworkState createState() => _HomeworkState();
+
+  final Map<String, dynamic>? arguments;
+
+  const Homework({super.key, this.arguments});
 }
 
 class _HomeworkState extends State<Homework> {
   int _selectedTabIndex =
       0; // 0 for "Détail de travail", 1 for "Envoyer le travail"
+  final HomeworkController controller = Get.put(HomeworkController());
+
+  late final String idMatiere;
+
+  @override
+  void initState() {
+    super.initState();
+    final args = widget.arguments;
+
+    if (args != null && args['id'] != null) {
+      idMatiere = args['id'];
+    } else {
+      print("no argument passed!!!");
+    }
+    // Pass the parameters to your controller
+    controller.fetchHomework(studentId: 1, matiereId: int.parse(idMatiere));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(children: [
-      Column(
-        children: [
-          // Top navigation bar
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.0),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // back button
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  width: 35,
-                  height: 35,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      padding: EdgeInsets.zero,
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      surfaceTintColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                      ),
-                    ),
-                    child: Icon(Icons.arrow_back, color: Colors.black54),
-                  ),
-                ),
-                const Text(
-                  "Travaux à faire",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                // Language button
-                LanguageButton(),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return Center(
+            child: CircularGradientSpinner(
+          color: Colors.blue,
+          size: 50,
+          strokeWidth: 20,
+        ));
+      }
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      if (controller.hasError.value) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              tabButton("Détail de travail", 0, _selectedTabIndex == 0,
-                  onTap: () {
-                setState(() {
-                  _selectedTabIndex = 0;
-                });
-              }),
-              tabButton("Envoyer le travail", 1, _selectedTabIndex == 1,
-                  onTap: () {
-                setState(() {
-                  _selectedTabIndex = 1;
-                });
-              }),
+              Text('Erreur: ${controller.errorMessage.value}'),
+              ElevatedButton(
+                onPressed: () => controller.fetchHomework(),
+                child: Text('Réessayer'),
+              ),
             ],
           ),
+        );
+      }
 
-          SizedBox(height: 20),
+      return ListView(children: [
+        Column(
+          children: [
+            // Top navigation bar
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // back button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    width: 35,
+                    height: 35,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        surfaceTintColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
+                      ),
+                      child: Icon(Icons.arrow_back, color: Colors.black54),
+                    ),
+                  ),
+                  Text(
+                    "Travaux à faire",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // Language button
+                  LanguageButton(),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
 
-          // Show content based on selected tab
-          _selectedTabIndex == 0 ? _buildDetailView() : _buildSubmitView(),
-        ],
-      ),
-    ]);
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                tabButton("Détail de travail", 0, _selectedTabIndex == 0,
+                    onTap: () {
+                  setState(() {
+                    _selectedTabIndex = 0;
+                  });
+                }),
+                tabButton("Envoyer le travail", 1, _selectedTabIndex == 1,
+                    onTap: () {
+                  setState(() {
+                    _selectedTabIndex = 1;
+                  });
+                }),
+              ],
+            ),
+
+            SizedBox(height: 20),
+
+            // Show content based on selected tab
+            _selectedTabIndex == 0 ? _buildDetailView() : _buildSubmitView(),
+          ],
+        ),
+      ]);
+    });
   }
 
   // This is the content view
   Widget _buildDetailView() {
+    final homework = controller.homework;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Explanation card
+          // Explanation card with title now from API
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(16),
@@ -119,11 +171,13 @@ class _HomeworkState extends State<Homework> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Explication des mots',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    homework.titre,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 Image.asset(
@@ -157,15 +211,15 @@ class _HomeworkState extends State<Homework> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'Matière : ',
+                      'Matière ID : ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text('Lecture'),
+                    Text('${homework.matiere_id}'),
                   ],
                 ),
                 SizedBox(height: 8),
 
-                // Unit
+                // Unit/Enseignant
                 Row(
                   children: [
                     Image.asset(
@@ -175,10 +229,10 @@ class _HomeworkState extends State<Homework> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'Unité : ',
+                      'Enseignant ID : ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text('Les étoiles'),
+                    Text('${homework.enseignant_id}'),
                   ],
                 ),
                 SizedBox(height: 8),
@@ -196,7 +250,7 @@ class _HomeworkState extends State<Homework> {
                       'Créé le : ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text('Samedi 3 Février 2024'),
+                    Text(DateFormat('EEEE d MMMM yyyy').format(homework.date)),
                   ],
                 ),
                 SizedBox(height: 8),
@@ -214,12 +268,13 @@ class _HomeworkState extends State<Homework> {
                       'Deadline le : ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text('Mardi 14 Février 2024'),
+                    Text(DateFormat('EEEE d MMMM yyyy')
+                        .format(homework.datelimite)),
                   ],
                 ),
                 SizedBox(height: 8),
 
-                // Classé
+                // État
                 Row(
                   children: [
                     Image.asset(
@@ -229,10 +284,10 @@ class _HomeworkState extends State<Homework> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'Classer : ',
+                      'État : ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text('Oui'),
+                    Text(homework.etat),
                   ],
                 ),
                 SizedBox(height: 8),
@@ -257,66 +312,10 @@ class _HomeworkState extends State<Homework> {
                 Padding(
                   padding: const EdgeInsets.only(left: 32.0),
                   child: Text(
-                    'Le mot "brillant" exprime quelque chose qui émet ou réfléchit la lumière de manière intense. C\'est un adjectif descriptif qui peut être utilisé pour décrire la lumière ou le contexte littéral dans le cadre linguistique et métaphorique, que ce soit pour les objets naturels ou la lumière. Ou dans le contexte métaphorique pour décrire quelque chose de remarquable, par exemple:',
+                    homework.description,
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
-                SizedBox(height: 12),
-
-                // Examples
-                Padding(
-                  padding: const EdgeInsets.only(left: 32.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('• ',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
-                          Expanded(
-                            child: Text(
-                              'Les vêtements blancs étaient brillants sous les rayons du soleil.',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('• ',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
-                          Expanded(
-                            child: Text(
-                              'L\'apparence de la montagne était clairement visible dans la journée brillante.',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('• ',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
-                          Expanded(
-                            child: Text(
-                              'Il a obtenu une réussite brillante dans son domaine.',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
                 SizedBox(height: 12),
 
                 // resources
@@ -337,34 +336,82 @@ class _HomeworkState extends State<Homework> {
                   ],
                 ),
 
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (var path in [
-                        "images/homework/test1.png",
-                        "images/homework/test2.png",
-                        "images/homework/test3.jpg",
-                        "images/homework/test4.jpg",
-                      ])
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    FullScreenImage(imagePath: path),
+                homework.ressources.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 32.0),
+                        child: Text("Aucune ressource disponible"),
+                      )
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (var resource in homework.ressources)
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => FullScreenImage(
+                                          imagePath:
+                                              "images/homework/$resource"),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Stack(
+                                    children: [
+                                      Image.asset(
+                                        "images/homework/$resource",
+                                        width: 200,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Container(
+                                            width: 200,
+                                            height: 120,
+                                            color: Colors.grey[300],
+                                            child: Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.insert_drive_file,
+                                                      size: 40),
+                                                  SizedBox(height: 8),
+                                                  Text(resource,
+                                                      textAlign:
+                                                          TextAlign.center),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      Positioned(
+                                        bottom: 5,
+                                        right: 5,
+                                        child: Container(
+                                          padding: EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black54,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            resource,
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: Image.asset(path, width: 200),
-                          ),
+                          ],
                         ),
-                    ],
-                  ),
-                )
+                      )
               ],
             ),
           ),
@@ -397,7 +444,6 @@ class _HomeworkState extends State<Homework> {
             )),
             SizedBox(height: 20),
 
-            // Upload file section
             // Upload file section
             Container(
               padding: EdgeInsets.all(16),
@@ -523,7 +569,7 @@ class _HomeworkState extends State<Homework> {
             ),
             SizedBox(height: 24),
 
-            // Comment section
+            // Comment section - now using the API data for compterendu
             Text(
               'Commentaires:',
               style: TextStyle(
@@ -534,6 +580,8 @@ class _HomeworkState extends State<Homework> {
             SizedBox(height: 8),
             TextField(
               maxLines: 5,
+              controller:
+                  TextEditingController(text: controller.homework.compterendu),
               decoration: InputDecoration(
                 hintText:
                     'Ajoutez vos commentaires ou notes pour l\'enseignant...',
@@ -551,7 +599,19 @@ class _HomeworkState extends State<Homework> {
             // Submit button
             Center(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // Here you would implement submission logic
+                  Get.snackbar(
+                    "✅ Travail remis avec succès",
+                    "Votre travail a été envoyé. Merci pour votre soumission !",
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: Colors.green.shade100,
+                    colorText: Colors.green.shade800,
+                    margin: EdgeInsets.all(16),
+                    duration: Duration(seconds: 3),
+                    icon: Icon(Icons.check_circle, color: Colors.green),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: EdgeInsets.symmetric(horizontal: 36, vertical: 14),
@@ -614,7 +674,26 @@ class FullScreenImage extends StatelessWidget {
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Center(
-        child: Image.asset(imagePath),
+        child: Image.asset(
+          imagePath,
+          errorBuilder: (context, error, stackTrace) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, size: 64, color: Colors.white),
+                SizedBox(height: 16),
+                Text(
+                  'Image non disponible',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                Text(
+                  imagePath,
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:circular_gradient_spinner/circular_gradient_spinner.dart';
 import 'package:flutter/material.dart';
+import 'package:my_app3/services/Services.dart';
 import 'package:my_app3/widgets/notification_button.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -128,7 +129,9 @@ class _ActiviteState extends State<Activite> {
               ),
 
               // Notifications badge
-              NotificationButton()
+              NotificationButton(
+                notificationService: Service(),
+              )
             ],
           ),
         ),
@@ -653,6 +656,11 @@ class _ActiviteState extends State<Activite> {
                           ),
                         ),
                       ),
+                    ),
+
+                    //sizing
+                    SizedBox(
+                      height: 100,
                     ),
                   ],
                 ),

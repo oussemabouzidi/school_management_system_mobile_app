@@ -94,11 +94,12 @@ class _ChatbotState extends State<Chatbot> {
                   ),
                   Expanded(
                       child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 20),
                     child: ClipOval(
                       child: Image.asset(
                         'images/logo_home_page.png',
-                        width: 100,
-                        height: 100,
+                        width: 80,
+                        height: 80,
                       ),
                     ),
                   )),

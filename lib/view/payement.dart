@@ -1,5 +1,8 @@
+import 'package:circular_gradient_spinner/circular_gradient_spinner.dart';
 import 'package:flutter/material.dart';
+import 'package:my_app3/controller/payement_controller.dart';
 import 'package:my_app3/widgets/language_button.dart';
+import 'package:get/get.dart';
 
 class Payement extends StatefulWidget {
   @override
@@ -9,6 +12,33 @@ class Payement extends StatefulWidget {
 class _PayementState extends State<Payement> {
   // Track which tab is active: 0 for Scolarité, 1 for Activités
   int _activeTabIndex = 0;
+  final PayementController _paymentController = Get.put(PayementController());
+  // Flag to track if initial loading has been done
+  bool _initialLoadDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initial data load - "scolarité" is the default tab
+    _loadData();
+  }
+
+  void _loadData() {
+    if (!_initialLoadDone) {
+      _paymentController.fetchData("scolarité");
+      _initialLoadDone = true;
+    }
+  }
+
+  void _changeTab(int index) {
+    if (_activeTabIndex != index) {
+      setState(() {
+        _activeTabIndex = index;
+        // Load appropriate data based on active tab
+        _paymentController.fetchData(index == 0 ? "scolarité" : "activités");
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,10 +112,43 @@ class _PayementState extends State<Payement> {
                 ],
               ),
               const SizedBox(height: 24),
-              // Conditionally display content based on active tab
-              _activeTabIndex == 0
-                  ? _buildScolariteContent()
-                  : _buildActivitesContent(),
+              // Display content based on API data
+              Obx(() {
+                if (_paymentController.isLoading.value) {
+                  return Center(
+                      child: CircularGradientSpinner(
+                    color: Colors.blue,
+                    size: 50,
+                    strokeWidth: 20,
+                  ));
+                }
+
+                if (_paymentController.hasError.value) {
+                  return Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.error, color: Colors.red, size: 50),
+                        SizedBox(height: 10),
+                        Text(_paymentController.errorMessage.value),
+                        SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () => _paymentController.fetchData(
+                              _activeTabIndex == 0 ? "scolarité" : "activités"),
+                          child: Text("Retry"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (_paymentController.payements.isEmpty) {
+                  return Center(
+                    child: Text("No payments found"),
+                  );
+                }
+
+                return _buildPaymentList();
+              }),
             ]),
           )
         ],
@@ -98,9 +161,7 @@ class _PayementState extends State<Payement> {
     bool isActive = _activeTabIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _activeTabIndex = index;
-        });
+        _changeTab(index);
       },
       child: Container(
         width: 170,
@@ -122,84 +183,52 @@ class _PayementState extends State<Payement> {
     );
   }
 
-  // Content for Scolarité tab (original content)
-  Widget _buildScolariteContent() {
+  // Dynamic payment list from API data
+  Widget _buildPaymentList() {
     return Column(
-      children: [
-        _buildPaymentItem(
-          imagePath: "images/money.png",
-          title: "Inscription",
-          isPaid: true,
-          amount: "150dt",
-        ),
-        SizedBox(height: 10),
-        _buildPaymentItem(
-          imagePath: "images/month.png",
-          title: "Janvier 2025",
-          isPaid: false,
-          amount: "250dt",
-        ),
-        SizedBox(height: 10),
-        _buildPaymentItem(
-          imagePath: "images/month.png",
-          title: "Février 2025",
-          isPaid: false,
-          amount: "250dt",
-        ),
-        SizedBox(height: 10),
-        _buildPaymentItem(
-          imagePath: "images/month.png",
-          title: "Mars 2025",
-          isPaid: false,
-          amount: "250dt",
-        ),
-        SizedBox(height: 10),
-        _buildPaymentItem(
-          imagePath: "images/month.png",
-          title: "Avril 2025",
-          isPaid: false,
-          amount: "250dt",
-        ),
-      ],
+      children: _paymentController.payements.map((payment) {
+        return Column(
+          children: [
+            _buildPaymentItem(
+              imagePath: _getImagePath(payment.title, payment.type),
+              title: payment.title,
+              isPaid: payment.paye == 1,
+              amount: "${payment.price}dt",
+            ),
+            SizedBox(height: 10),
+          ],
+        );
+      }).toList(),
     );
   }
 
-  // Content for Activités tab (new content)
-  Widget _buildActivitesContent() {
-    return Column(
-      children: [
-        _buildPaymentItem(
-          imagePath: "images/payment/football.png",
-          title: "Football",
-          isPaid: true,
-          amount: "50dt",
-        ),
-        SizedBox(height: 10),
-        _buildPaymentItem(
-          imagePath: "images/payment/excursion.png",
-          title: "Excursion - Janvier",
-          isPaid: false,
-          amount: "75dt",
-        ),
-        SizedBox(height: 10),
-        _buildPaymentItem(
-          imagePath: "images/payment/music.png",
-          title: "Club de musique",
-          isPaid: false,
-          amount: "100dt",
-        ),
-        SizedBox(height: 10),
-        _buildPaymentItem(
-          imagePath: "images/payment/excursion.png",
-          title: "Excursion - Mars",
-          isPaid: false,
-          amount: "80dt",
-        ),
-      ],
-    );
+  // Helper method to determine image path based on payment type and title
+  String _getImagePath(String title, String type) {
+    String lowerTitle = title.toLowerCase();
+
+    if (type.toLowerCase() == "scolarité") {
+      if (lowerTitle.contains("inscription")) {
+        return "images/money.png";
+      } else {
+        return "images/month.png";
+      }
+    } else {
+      // For activities
+      if (lowerTitle.contains("football")) {
+        return "images/payment/football.png";
+      } else if (lowerTitle.contains("excursion")) {
+        return "images/payment/excursion.png";
+      } else if (lowerTitle.contains("musique") ||
+          lowerTitle.contains("music")) {
+        return "images/payment/music.png";
+      } else {
+        // Default image for activities
+        return "images/payment/excursion.png";
+      }
+    }
   }
 
-  // Reusable widget for payment items
+  // Reusable widget for payment items (unchanged)
   Widget _buildPaymentItem({
     required String imagePath,
     required String title,

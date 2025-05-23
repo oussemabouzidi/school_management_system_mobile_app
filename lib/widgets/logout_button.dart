@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:my_app3/shared/SharedPrefsService.dart';
 
 class LogoutButton extends StatelessWidget {
   @override
@@ -63,7 +65,10 @@ class LogoutButton extends StatelessWidget {
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20)),
                               ),
-                              onPressed: () {},
+                              onPressed: () {
+                                SharedPrefsService.clearUserData();
+                                Get.offNamed('/login');
+                              },
                               child: Container(
                                 decoration: BoxDecoration(
                                     color: Color(0xFFFF8CA1),

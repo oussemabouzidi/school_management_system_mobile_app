@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:get/get.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:intl/intl.dart';
 import 'package:my_app3/controller/wrappercontroller.dart';
+import 'package:my_app3/models/Devoir.dart';
+import 'package:my_app3/models/LastNotes.dart';
+import 'package:my_app3/services/Services.dart';
+import 'package:my_app3/shared/SharedPrefsService.dart';
 import 'package:my_app3/widgets/language_button.dart';
 import 'package:my_app3/widgets/logout_button.dart';
 import 'package:my_app3/widgets/notification_button.dart';
+import 'package:my_app3/widgets/presence_card.dart';
 import 'package:my_app3/widgets/student_card.dart';
 import 'package:my_app3/view/wrapper.dart';
 
@@ -15,17 +22,39 @@ class Home extends StatefulWidget {
 }
 
 class HomeState extends State<Home> {
-  final List<Map<String, String>> grades = [
-    {'subject': 'ANGLAIS', 'date': '10 janv', 'grade': '12,00'},
-    {'subject': 'FRANCAIS', 'date': '7 janv', 'grade': '12,00'},
-    {'subject': 'PHYSIQUE', 'date': '10 janv', 'grade': '12,00'},
-    {'subject': 'INFORMATIQUE', 'date': '10 janv', 'grade': '12,00'},
-    {'subject': 'ARAB', 'date': '10 janv', 'grade': '12,00'},
-  ];
+  late List<Lastnotes> grades = [];
+  late Devoir latest_devoir;
+  late String date_formated;
+  //late String mois_formated;
+  Service service = Service();
 
   bool _showChatbotTooltip = true;
   bool _isExpanded = false;
   int _animationCount = 0;
+  late var role;
+
+  void _getGrades() async {
+    grades = await service.getLastNotes();
+  }
+
+  void _getDevoirInfo() async {
+    latest_devoir = await service.getLastsDevoir();
+
+    String originalDate = latest_devoir.date_test;
+
+    // Parse the string into a DateTime object
+    DateTime date = DateTime.parse(originalDate);
+
+    // Format to "dd-MM"
+    String formatted = DateFormat('dd-MM').format(date);
+    date_formated = formatted;
+    print(date_formated);
+
+    // Format to abbreviated month in French (e.g., janv, févr, mars)
+    String shortMonth = DateFormat.MMM('fr_FR').format(date);
+    /*mois_formated = shortMonth;
+    print(mois_formated);*/
+  }
 
   void _startTooltipTimer() {
     setState(() {
@@ -66,11 +95,20 @@ class HomeState extends State<Home> {
     }
   }
 
+  void _loadUserRole() async {
+    role = await SharedPrefsService.getUserRole();
+    // If needed, call setState to update UI
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     _startTooltipTimer();
     _startAnimation();
+    _loadUserRole();
+    _getGrades();
+    _getDevoirInfo();
   }
 
   @override
@@ -95,7 +133,9 @@ class HomeState extends State<Home> {
                     // Language button
                     LanguageButton(),
                     // Notification button with badge
-                    NotificationButton(),
+                    NotificationButton(
+                      notificationService: Service(),
+                    ),
                     // Year dropdown
                     Container(
                       decoration: BoxDecoration(
@@ -141,76 +181,9 @@ class HomeState extends State<Home> {
                 padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Column(
                   children: [
-                    // Presence Card
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            spreadRadius: 0,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text("Votre présence est marqué !"),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Image.asset("images/done.png"),
-                                      ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Container(
-                                            width: 80,
-                                            child: Center(
-                                              child: Text("Ok"),
-                                            ),
-                                          ))
-                                    ],
-                                  ),
-                                );
-                              });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          surfaceTintColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              "Marqué votre présence",
-                              style: TextStyle(
-                                color: Color(0xFF2D3142),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 12),
-                            Image.asset(
-                              'images/presence.png',
-                              width: 80,
-                              height: 80,
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
+                    if (role == 'eleve')
+                      // presence screen
+                      PresenceCard(),
 
                     SizedBox(height: 24),
 
@@ -299,10 +272,9 @@ class HomeState extends State<Home> {
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.event_note,
-                                  color: Color(0xFF559DFF),
-                                ),
+                                HugeIcon(
+                                    icon: HugeIcons.strokeRoundedNote,
+                                    color: Color(0xFF559DFF)),
                                 SizedBox(width: 8),
                                 Text(
                                   'Prochains Devoir',
@@ -343,23 +315,23 @@ class HomeState extends State<Home> {
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
+                                    children: [
                                       Text(
-                                        '16',
-                                        style: TextStyle(
-                                          fontSize: 20,
+                                        date_formated,
+                                        style: const TextStyle(
+                                          fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                           color: Color(0xFF559DFF),
                                         ),
                                       ),
-                                      Text(
-                                        'janv.',
+                                      /*Text(
+                                        mois_formated,
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF559DFF),
                                         ),
-                                      ),
+                                      ),*/
                                     ],
                                   ),
                                 ),
@@ -369,9 +341,9 @@ class HomeState extends State<Home> {
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
-                                        'MATÉMATIQUE',
+                                        latest_devoir.matiere,
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
@@ -380,7 +352,7 @@ class HomeState extends State<Home> {
                                       ),
                                       SizedBox(height: 4),
                                       Text(
-                                        'Mr blanc',
+                                        "${latest_devoir.enseignant_nom}, ${latest_devoir.enseignant_prenom}",
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Color(0xFF2D3142),
@@ -388,7 +360,7 @@ class HomeState extends State<Home> {
                                       ),
                                       SizedBox(height: 4),
                                       Text(
-                                        'jeudi 16 janv, de 11h00 à 12h00',
+                                        '${latest_devoir.date_test}, ${latest_devoir.heure}',
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Colors.grey,
@@ -404,7 +376,7 @@ class HomeState extends State<Home> {
                                           ),
                                           SizedBox(width: 4),
                                           Text(
-                                            'Salle 21',
+                                            latest_devoir.salle,
                                             style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.grey,
@@ -454,10 +426,10 @@ class HomeState extends State<Home> {
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.score,
-                                  color: Color(0xFF559DFF),
-                                ),
+                                HugeIcon(
+                                    icon: HugeIcons
+                                        .strokeRoundedDocumentValidation,
+                                    color: Color(0xFF559DFF)),
                                 SizedBox(width: 8),
                                 Text(
                                   'Dernières notes',
@@ -573,7 +545,7 @@ notre chatbot ! 😃🚀 """,
   }
 }
 
-Widget _buildGradeItem(Map<String, String> grade) {
+Widget _buildGradeItem(Lastnotes grade) {
   return Container(
     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
     decoration: BoxDecoration(
@@ -593,7 +565,7 @@ Widget _buildGradeItem(Map<String, String> grade) {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                grade['subject']!,
+                grade.subject,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -610,7 +582,7 @@ Widget _buildGradeItem(Map<String, String> grade) {
                   ),
                   SizedBox(width: 4),
                   Text(
-                    grade['date']!,
+                    grade.date,
                     style: const TextStyle(
                       fontSize: 13,
                       color: Colors.grey,
@@ -629,7 +601,7 @@ Widget _buildGradeItem(Map<String, String> grade) {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            grade['grade']!,
+            "${grade.grade}",
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
@@ -673,6 +645,12 @@ class DashboardItem extends StatelessWidget {
               wrapperController.changePage(2); // Switch to the "Menu" tab
               Future.delayed(Duration(milliseconds: 100), () {
                 Get.toNamed('/menu/homework', id: 1);
+              });
+              break;
+            case "Mes livres":
+              wrapperController.changePage(2); // Switch to the "Menu" tab
+              Future.delayed(Duration(milliseconds: 100), () {
+                Get.toNamed('/menu/livres', id: 1);
               });
               break;
             default:

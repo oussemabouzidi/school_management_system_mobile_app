@@ -21,7 +21,6 @@ import 'package:my_app3/view/languages.dart';
 import 'package:my_app3/view/login.dart';
 import 'package:my_app3/view/menu.dart';
 import 'package:my_app3/view/menu_2.dart';
-import 'package:my_app3/view/modifier_profile.dart';
 import 'package:my_app3/view/notes.dart';
 import 'package:my_app3/view/payement.dart';
 import 'package:my_app3/view/polices.dart';
@@ -56,8 +55,9 @@ class _MyappState extends State<Myapp> {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       theme: ThemeData.light(),
-      home: Wrapper(),
+      initialRoute: "/login",
       getPages: [
+        GetPage(name: "/login", page: () => Login()),
         GetPage(name: "/wrapper", page: () => Wrapper()),
         GetPage(name: "/home", page: () => Home()),
         GetPage(name: "/activite", page: () => Activite()),
@@ -86,7 +86,6 @@ class _MyappState extends State<Myapp> {
         GetPage(name: "/payment", page: () => Payement()),
         GetPage(name: "/behavior", page: () => Behavior()),
         GetPage(name: "/polices", page: () => Polices()),
-        GetPage(name: "/modify_profile", page: () => ModifierProfil()),
       ],
     );
   }

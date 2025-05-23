@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:my_app3/services/Services.dart';
 import 'package:my_app3/widgets/notification_button.dart';
 
 class ChangePassword extends StatelessWidget {
@@ -35,8 +36,6 @@ class ChangePassword extends StatelessWidget {
                 ),
                 child: IconButton(
                   onPressed: () {
-                    //Get.back();
-                    //Get.toNamed("/setting/main", id: 2);
                     Navigator.pop(context);
                   },
                   icon: Icon(
@@ -58,7 +57,9 @@ class ChangePassword extends StatelessWidget {
               ),
 
               // Notification button with badge
-              NotificationButton()
+              NotificationButton(
+                notificationService: Service(),
+              )
             ],
           ),
         ),

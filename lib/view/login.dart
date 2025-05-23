@@ -1,243 +1,478 @@
+import 'package:circular_gradient_spinner/circular_gradient_spinner.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:my_app3/controller/login_controller.dart';
 
-class Login extends StatelessWidget {
-  /*
-  final TextEditingController usernameController;
-  final TextEditingController passwordController;
-  final bool obscurePassword;
-  final Function() togglePasswordVisibility;
-  final Function() onForgotPassword;
-  final Function(String, String) onLogin;*/
+class Login extends StatefulWidget {
+  @override
+  _LoginState createState() => _LoginState();
+}
 
-  /*const Login({
-    Key? key,
-     this.usernameController,
-    required this.passwordController,
-    required this.obscurePassword,
-    required this.togglePasswordVisibility,
-    required this.onForgotPassword,
-    required this.onLogin,
-  }) : super(key: key);*/
+class _LoginState extends State<Login> {
+  // Controllers for the text fields
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final LoginController loginController = Get.put(LoginController());
+
+  // Selected role: 0 for élève, 1 for parent
+  int _selectedRole = 0;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: Scaffold(
-      body: Stack(children: [
-        // Background Image
-        Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('images/background.png'), // Or NetworkImage
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.center,
+      theme: ThemeData(
+        primaryColor: Color(0xFF4A90E2),
+        colorScheme: ColorScheme.light(
+          primary: Color(0xFF4A90E2),
+          secondary: Color(0xFF67B0F9),
+          background: Color(0xFFF9FAFC),
+          surface: Colors.white,
+        ),
+        scaffoldBackgroundColor: Color(0xFFF9FAFC),
+      ),
+      home: Scaffold(
+        backgroundColor: Color(0xFFEAF3FC),
+        body: SingleChildScrollView(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Background image
+                  // App Logo/Branding
+                  SizedBox(height: 40),
                   Image.asset(
-                    'images/login_effect.png',
-                    //width: 500,
-                    height: 50,
-                    fit: BoxFit.cover,
+                    'images/logo_home_page.png',
+                    width: 180,
+                    height: 180,
+                  ),
+                  SizedBox(height: 5),
+
+                  Text(
+                    "ISE Collège Lycée",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A90E2),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Connectez-vous à votre compte",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF67B0F9),
+                    ),
+                  ),
+                  SizedBox(height: 40),
+
+                  // Role Selection
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // Header
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF6F6F6),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              topRight: Radius.circular(24),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.person,
+                                color: Color(0xFF4A90E2),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Choisissez votre profil',
+                                  style: TextStyle(
+                                    color: Color(0xFF2D3142),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Role selection buttons
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedRole = 0;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    decoration: BoxDecoration(
+                                      color: _selectedRole == 0
+                                          ? Color(0xFF4A90E2)
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _selectedRole == 0
+                                            ? Color(0xFF4A90E2)
+                                            : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          child:
+                                              Image.asset('images/eleve.png'),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Élève',
+                                          style: TextStyle(
+                                            color: _selectedRole == 0
+                                                ? Colors.white
+                                                : Color(0xFF2D3142),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedRole = 1;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    decoration: BoxDecoration(
+                                      color: _selectedRole == 1
+                                          ? Color(0xFF4A90E2)
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _selectedRole == 1
+                                            ? Color(0xFF4A90E2)
+                                            : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          child:
+                                              Image.asset('images/parent.png'),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Parent',
+                                          style: TextStyle(
+                                            color: _selectedRole == 1
+                                                ? Colors.white
+                                                : Color(0xFF2D3142),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  // Foreground image
-                  Image.asset(
-                    'images/person_set.png',
-                    //width: 300,
-                    height: 150,
+                  SizedBox(height: 24),
+
+                  // Login Form
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // Header
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF6F6F6),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              topRight: Radius.circular(24),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.login,
+                                color: Color(0xFF2D3142),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Connexion',
+                                  style: TextStyle(
+                                    color: Color(0xFF2D3142),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Username field
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: TextField(
+                            controller: _usernameController,
+                            decoration: InputDecoration(
+                              hintText: _selectedRole == 0
+                                  ? ' Email élève'
+                                  : ' Email parent',
+                              hintStyle: TextStyle(color: Colors.grey[600]),
+                              prefixIcon: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.person, color: Colors.purple),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade300),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade300),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.purple),
+                              ),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                          ),
+                        ),
+
+                        // Password field
+                        Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
+                          child: TextField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: ' Mot de passe',
+                              hintStyle: TextStyle(color: Colors.grey[600]),
+                              prefixIcon: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.key, color: Colors.green),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade300),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade300),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.blue),
+                              ),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                          ),
+                        ),
+
+                        Obx(() {
+                          return loginController.isLoading.value
+                              ? CircularGradientSpinner(
+                                  color: Colors.blue,
+                                  size: 50,
+                                  strokeWidth: 20,
+                                )
+                              :
+                              // Login button
+                              Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        // Here you would handle the login logic
+                                        print(
+                                            'Role: ${_selectedRole == 0 ? "Élève" : "Parent"}');
+                                        print(
+                                            'Username: ${_usernameController.text}');
+                                        print(
+                                            'Password: ${_passwordController.text}');
+
+                                        String email = _usernameController.text;
+                                        String password =
+                                            _passwordController.text;
+                                        if (email.isEmpty || password.isEmpty) {
+                                          Get.snackbar(
+                                            'Erreur',
+                                            'Veuillez remplir tous les champs.',
+                                            snackPosition: SnackPosition.TOP,
+                                            colorText: Colors.white,
+                                            backgroundColor: Colors.redAccent
+                                                .withOpacity(0.7),
+                                          );
+                                          loginController.isLoading.value =
+                                              false;
+                                          return;
+                                        }
+                                        loginController.isLoading.value = true;
+
+                                        try {
+                                          await loginController.fetchUser(
+                                              email: email, pwd: password);
+
+                                          if (!loginController.hasError.value &&
+                                              loginController.user.id != 0) {
+                                            // Success: Navigate to /wrapper
+                                            print(
+                                                'Role: ${loginController.user.role}');
+
+                                            Get.offNamed(
+                                                '/wrapper'); // Or pass role/id if needed
+                                          } else {
+                                            // Failed: show snackbar
+                                            Get.snackbar(
+                                              'Échec de la connexion',
+                                              loginController
+                                                  .errorMessage.value,
+                                              snackPosition: SnackPosition.TOP,
+                                              colorText: Colors.white,
+                                              backgroundColor: Colors.redAccent
+                                                  .withOpacity(0.7),
+                                            );
+                                            loginController.isLoading.value =
+                                                false;
+                                          }
+                                        } catch (e) {
+                                          Get.snackbar(
+                                            'Erreur',
+                                            'Une erreur inattendue est survenue.',
+                                            snackPosition: SnackPosition.TOP,
+                                            colorText: Colors.white,
+                                            backgroundColor: Colors.redAccent
+                                                .withOpacity(0.7),
+                                          );
+                                          loginController.isLoading.value =
+                                              false;
+                                        } finally {
+                                          loginController.isLoading.value =
+                                              false;
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xFF4A90E2),
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Se connecter',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                        }),
+                        // Forgot password link
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: TextButton(
+                            onPressed: () {
+                              // Handle forgot password
+                            },
+                            child: Text(
+                              'Mot de passe oublié ?',
+                              style: TextStyle(
+                                color: Color(0xFF67B0F9),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              Container(
-                child: Container(
-                    alignment: Alignment.topCenter,
-                    child: Column(
-                      children: [
-                        Text("Connecter vous",
-                            style: TextStyle(
-                                color: Color(0XFF124388),
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold)),
-                        Text("Bienvenue",
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 16)),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'Identifiant',
-                                style: TextStyle(
-                                  color: Color(0xFF1A5297),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: TextField(
-                                  decoration: const InputDecoration(
-                                    hintText: 'Entrer votre identifiant',
-                                    border: InputBorder.none,
-                                    prefixIcon: Icon(Icons.person_outline),
-                                    contentPadding:
-                                        EdgeInsets.symmetric(vertical: 12),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              const Text(
-                                'Mot de passe',
-                                style: TextStyle(
-                                  color: Color(0xFF1A5297),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: TextField(
-                                  decoration: InputDecoration(
-                                    hintText: '••••••••',
-                                    border: InputBorder.none,
-                                    prefixIcon: const Icon(Icons.key),
-                                    suffixIcon: IconButton(
-                                      icon: Icon(Icons.visibility_off),
-                                      onPressed: () {},
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {},
-                                  child: const Text(
-                                    'Mot de passe oublié?',
-                                    style: TextStyle(
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                width: double.infinity,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFFF9D976), // gold/yellow
-                                      const Color(0xFF6BBBF7), // blue
-                                    ],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  ),
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Se connecter',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                thickness: 1,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(
-                                "ou continuer avec",
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[500]),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                thickness: 1,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(left: 140, top: 30),
-                          child: Row(
-                            children: [
-                              Container(
-                                height: 90,
-                                width: 90,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: Color(0XFF4CAF50).withOpacity(0.4),
-                                ),
-                                child: Image.asset("images/google.png"),
-                              ),
-                              SizedBox(
-                                width: 30,
-                              ),
-                              Container(
-                                height: 90,
-                                width: 90,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: Color(0XFF0A66C2).withOpacity(0.40),
-                                ),
-                                child: Image.asset("images/fb.png"),
-                              )
-                            ],
-                          ),
-                        )
-                      ],
-                    )),
-              ),
-            ],
+            ),
           ),
         ),
-      ]),
-    ));
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
